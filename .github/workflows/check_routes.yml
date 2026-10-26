@@ -2,11 +2,16 @@ name: Route watcher
 
 on:
   schedule:
-    - cron: '0 8 * * 1'   # every Monday at 08:00 UTC
+    - cron: '0 8 * * 1'
   workflow_dispatch:
     inputs:
       test_mode:
         description: 'Print a sample email without sending or saving state'
+        required: false
+        default: false
+        type: boolean
+      force_send:
+        description: 'Send email even on first run'
         required: false
         default: false
         type: boolean
@@ -42,6 +47,7 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
+          FORCE_SEND: ${{ inputs.force_send }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.test_mode }}" = "true" ]; then
             python check_routes.py --test
