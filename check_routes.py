@@ -36,6 +36,7 @@ SMTP_PORT = int(os.environ.get("SMTP_PORT", "465"))
 SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASS = os.environ.get("SMTP_PASS", "")
 MAIL_TO = os.environ.get("MAIL_TO", SMTP_USER)
+FORCE_SEND = os.environ.get("FORCE_SEND", "").lower() == "true"
 
 HEADLINES = [
     "The Grill is on fire!",
@@ -169,7 +170,16 @@ def main():
 
     if not STATE_FILE.exists():
         STATE_FILE.write_text(json.dumps(sorted(current), indent=2))
-        print(f"Baseline saved with {len(current)} links. No email sent.")
+        print(f"Baseline saved with {len(current)} links.")
+        if FORCE_SEND:
+            to_report = {u: i for u, i in current.items() if wanted(i)}
+            if to_report:
+                send_mail(to_report)
+                print(f"Forced email sent for {len(to_report)} route(s).")
+            else:
+                print("No reportable routes in forced-send mode.")
+        else:
+            print("No email sent on first run.")
         return
 
     seen = set(json.loads(STATE_FILE.read_text()))
