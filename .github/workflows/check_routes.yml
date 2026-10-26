@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       test_mode:
-        description: 'Print a sample email instead of sending one'
+        description: 'Print a sample email without sending or saving state'
         required: false
         default: false
         type: boolean
@@ -18,6 +18,12 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Restore seen routes cache
+        uses: actions/cache@v4
+        with:
+          path: seen_routes.json
+          key: route-watcher-state
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -42,13 +48,9 @@ jobs:
           else
             python check_routes.py
           fi
-      - name: Commit seen routes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add seen_routes.json
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          git commit -m "Update seen routes"
-          git push
+
+      - name: Save seen routes cache
+        uses: actions/cache@v4
+        with:
+          path: seen_routes.json
+          key: route-watcher-state
